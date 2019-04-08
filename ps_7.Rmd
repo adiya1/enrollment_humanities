@@ -1,0 +1,20 @@
+---
+title: "Problem Set 7"
+author: "Adiya Abdilkhay"
+date: '04/06/2019'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(readxl)
+```
+
+```{r}
+spring_2019 <- read_xlsx("class_enrollment_summary_by_term_3.22.19.xlsx")
+
+spring_2018 <- read_xlsx("class_enrollment_summary_by_term_03.06.18.xlsx")
+```
+
+
