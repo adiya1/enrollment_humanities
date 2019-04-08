@@ -42,12 +42,14 @@ filter(course_department %in% c("Celtic Languages & Literatures", "Classics, The
   
   group_by(course_department, year_id) %>%
   summarize(total = sum(u_grad)) %>% 
-  mutate(e_2018 = fct_recode(year_id, "1")) 
-  # mutate(difference = total_2018 - total_2019) 
+  mutate(year_id = fct_recode(year_id, e_2018 = "1")) %>% 
+  mutate(year_id = fct_recode(year_id, e_2019 = "2")) %>% 
+  spread(key = year_id, value = total) %>% 
+  mutate(difference = e_2019 - e_2018) 
   
 both %>%
 ggplot(aes(x = course_department, y = difference)) +
-  geom_jitter() +
+  geom_point() +
   coord_flip()
 
 # fs::file_delete(c("reg_2018.xlsx", "reg_2019.xlsx"))
