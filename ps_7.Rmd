@@ -45,12 +45,17 @@ filter(course_department %in% c("Celtic Languages & Literatures", "Classics, The
   mutate(year_id = fct_recode(year_id, e_2018 = "1")) %>% 
   mutate(year_id = fct_recode(year_id, e_2019 = "2")) %>% 
   spread(key = year_id, value = total) %>% 
-  mutate(difference = e_2019 - e_2018) 
+  mutate(difference = e_2019 - e_2018) %>% 
+  ungroup()
   
 both %>%
+mutate(course_department = fct_reorder(course_department, desc(difference))) %>%
 ggplot(aes(x = course_department, y = difference)) +
   geom_point() +
-  coord_flip()
+  coord_flip() +
+  labs(title = "Difference in Total Undergraduate Enrollment \nin Humanities Departments",
+       subtitle = "Data 2018 and 2019 shows a decline in the majority \nof departments in Humanities",
+       caption = "Data from the Harvard Registrar")
 
 # fs::file_delete(c("reg_2018.xlsx", "reg_2019.xlsx"))
 ```
