@@ -12,6 +12,7 @@ library(readxl)
 library(ggthemes)
 library(janitor)
 library(fivethirtyeight)
+library(gganimate)
 ```
 
 ```{r}
@@ -36,10 +37,12 @@ x_2019 <- read_excel("reg_2019.xlsx", skip = 3) %>%
   filter(!is.na(u_grad), !is.na(course_title)) %>% 
  select(course_title, course_name, course_department, u_grad, grad,   non_degree, x_reg, withdraw, total)
 
+
 both <- bind_rows(x_2018, x_2019, .id = "year_id") %>% 
   
 filter(course_department %in% c("Celtic Languages & Literatures", "Classics, The", "Comparative Literature", "English", "Germanic Languages & Literatures", "History of Art & Architecture", "Music", "Romance Languages & Literatures", "Slavic Languages & Literatures", "Visual & Environmental Studies")) %>% 
   
+  mutate(course_department = case_when(course_department == "Classics, The" ~ "The Classics", TRUE ~ course_department)) %>%
   group_by(course_department, year_id) %>%
   summarize(total = sum(u_grad)) %>% 
   mutate(year_id = fct_recode(year_id, e_2018 = "1")) %>% 
@@ -50,12 +53,22 @@ filter(course_department %in% c("Celtic Languages & Literatures", "Classics, The
   
 both %>%
 mutate(course_department = fct_reorder(course_department, desc(difference))) %>%
-ggplot(aes(x = course_department, y = difference)) +
+ggplot(aes(x = course_department, y = difference, color = difference)) +
   geom_point() +
   coord_flip() +
-  labs(title = "Difference in Total Undergraduate Enrollment \nin Humanities Departments",
+  labs(title = "Difference in Total Undergraduate \nEnrollment in Humanities Departments",
        subtitle = "Data 2018 and 2019 shows a decline in the majority \nof departments in Humanities",
-       caption = "Data from the Harvard Registrar")
+       caption = "Data from the Harvard Registrar, darker points indicate larger decline") +
+  ylab("Difference in Total Enrollment") +
+  xlab("Department Name") +
+  theme_fivethirtyeight() +
+  theme(plot.title = element_text(color = "purple")) +
+  theme(plot.subtitle = element_text(color = "purple")) +
+  theme(plot.caption = element_text(color = "purple")) +
+  theme(axis.text.y = element_text(color = "blue")) +
+  theme(axis.text.x = element_text(color = "blue")) +
+  guides(color = FALSE)
+  
 
 # fs::file_delete(c("reg_2018.xlsx", "reg_2019.xlsx"))
 ```
