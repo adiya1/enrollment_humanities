@@ -1,5 +1,5 @@
 ---
-title: "Problem Set 7"
+title: "Change in Total Enrollment in Humanities Departments"
 author: "Adiya Abdilkhay"
 date: '04/06/2019'
 output: html_document
@@ -9,12 +9,47 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(readxl)
+library(ggthemes)
+library(janitor)
+library(fivethirtyeight)
 ```
 
 ```{r}
-spring_2019 <- read_xlsx("class_enrollment_summary_by_term_3.22.19.xlsx")
+download.file(url = "https://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_03.06.18.xlsx",
+              destfile = "reg_2018.xlsx",
+              mode = "wb")
 
-spring_2018 <- read_xlsx("class_enrollment_summary_by_term_03.06.18.xlsx")
+download.file(url = "https://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_3.22.19.xlsx",
+              destfile = "reg_2019.xlsx",
+              mode = "wb")
+
 ```
 
+```{r}
+x_2018 <- read_excel("reg_2018.xlsx", skip = 3) %>% 
+  clean_names() %>% 
+  filter(!is.na(u_grad), !is.na(course_title)) %>% 
+ select(course_title, course_name, course_department, u_grad, grad, non_degree, x_reg, withdraw, total)
+
+x_2019 <- read_excel("reg_2019.xlsx", skip = 3) %>% 
+  clean_names() %>% 
+  filter(!is.na(u_grad), !is.na(course_title)) %>% 
+ select(course_title, course_name, course_department, u_grad, grad,   non_degree, x_reg, withdraw, total)
+
+both <- bind_rows(x_2018, x_2019, .id = "year_id") %>% 
+  
+filter(course_department %in% c("Celtic Languages & Literatures", "Classics, The", "Comparative Literature", "English", "Germanic Languages & Literatures", "History of Art & Architecture", "Music", "Romance Languages & Literatures", "Slavic Languages & Literatures", "Visual & Environmental Studies")) %>% 
+  
+  group_by(course_department, year_id) %>%
+  summarize(total = sum(u_grad)) %>% 
+  mutate(e_2018 = fct_recode(year_id, "1")) 
+  # mutate(difference = total_2018 - total_2019) 
+  
+both %>%
+ggplot(aes(x = course_department, y = difference)) +
+  geom_jitter() +
+  coord_flip()
+
+# fs::file_delete(c("reg_2018.xlsx", "reg_2019.xlsx"))
+```
 
