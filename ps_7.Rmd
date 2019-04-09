@@ -1,5 +1,5 @@
 ---
-title: "Change in Total Enrollment in Humanities Departments"
+title: "Change in Total Enrollment in Humanities Departments from Spring 2018 to Spring 2019"
 author: "Adiya Abdilkhay"
 date: '04/06/2019'
 output: html_document
@@ -8,10 +8,20 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
+# this is the essential package that enables me to access most of the functions
+# i will be using
+
 library(readxl)
+# i am downloading my datasets as xlsx files and i need this package to be able
+# to do so
+
 library(ggthemes)
+# i will be using a theme different from the default to make my graph look more
+# authentic
+
 library(janitor)
-library(fivethirtyeight)
+# i use this code chunk to load the packages that i'll be using while creating
+# the graphs
 ```
 
 ```{r}
@@ -19,56 +29,84 @@ download.file(url = "https://registrar.fas.harvard.edu/files/fas-registrar/files
               destfile = "reg_2018.xlsx",
               mode = "wb")
 
+# i am downloading the data for Spring 2018 using the download.file function and
+# specify the file i want it to be saved under
+
 download.file(url = "https://registrar.fas.harvard.edu/files/fas-registrar/files/class_enrollment_summary_by_term_3.22.19.xlsx",
               destfile = "reg_2019.xlsx",
               mode = "wb")
 
+# i am downloading the data for Spring 2019 using the download.file function and
+# specify the file i want it to be saved under i decided to use these semesters
+# because i wanted to compare the change that has occured in just one year and
+# am curious in general about the decline of interest in humanities courses,
+# which is an issue that i feel strongly about and want to learn more about. i
+# picked both semesters to be spring so that there would be a higher chance of
+# getting same classes that are offered in the spring, but overall the
+# similarity of classes was not a big factor
 ```
 
 ```{r}
 x_2018 <- read_excel("reg_2018.xlsx", skip = 3) %>% 
   clean_names() %>% 
+  # i am assigning my data to an easy, understandable name when reading it in and am cleaning it by skipping the first three rows and making sure that my columns have clear concise names
   filter(!is.na(u_grad), !is.na(course_title)) %>% 
+  # i am excluding empty results for classes with 0 undergrads and rows that do not have the name of the course
  select(course_title, course_name, course_department, u_grad, grad, non_degree, x_reg, withdraw, total)
-
+  # i am picking the variables that i want to work with throughout the process
 x_2019 <- read_excel("reg_2019.xlsx", skip = 3) %>% 
   clean_names() %>% 
+  # i am assigning my data to an easy, understandable name when reading it in and am cleaning it by skipping the first three rows and making sure that my columns have clear concise names
   filter(!is.na(u_grad), !is.na(course_title)) %>% 
+  # i am excluding empty results for classes with 0 undergrads and rows that do not have the name of the course
  select(course_title, course_name, course_department, u_grad, grad,   non_degree, x_reg, withdraw, total)
-
+# i am picking the variables that i want to work with throughout the process
 
 both <- bind_rows(x_2018, x_2019, .id = "year_id") %>% 
-  
+  # now that i have both datasets read in and tidied, i am able to join them by binding rows, since they have identical columns. bind_rows() also creates a new columns named .id, and i am assigning it to be named year_id, which is either 1 (Spring 2018) or 2 (Spring 2019)
 filter(course_department %in% c("Celtic Languages & Literatures", "Classics, The", "Comparative Literature", "English", "Germanic Languages & Literatures", "History of Art & Architecture", "Music", "Romance Languages & Literatures", "Slavic Languages & Literatures", "Visual & Environmental Studies")) %>% 
-  
+  # since i am making observations just for departments in the humanities, i am filtering them by hand after looking at the official list of departments at Harvard College
   mutate(course_department = case_when(course_department == "Classics, The" ~ "The Classics", TRUE ~ course_department)) %>%
+  # since i want all of my department names to look good in the graph, i am using case_when to change one name in the course_department column 
   group_by(course_department, year_id) %>%
+  # since i am separating my datapoints by department and year, i am grouping by these variables
   summarize(total = sum(u_grad)) %>% 
+  # now that all of my values in the dataframe are organized, i can count the sum of all undergrands enrolled in courses in each department i picked
   mutate(year_id = fct_recode(year_id, e_2018 = "1")) %>% 
+  # to make my dataset more concise, i am assigning 1, the year_id, to be instead named e_2018 which stands for enrollment 2018
   mutate(year_id = fct_recode(year_id, e_2019 = "2")) %>% 
+   # to make my dataset more concise, i am assigning 1, the year_id, to be instead named e_2019 which stands for enrollment 2019
   spread(key = year_id, value = total) %>% 
+  # now i need to make the year a column so i can observe rows of total students that belong to each column by department
   mutate(difference = e_2019 - e_2018) %>% 
+  # i am finding the change in the number of students enrolled by finding the difference between the two years within a mutate
   ungroup()
+  # now that i don't need my data to be grouped together, i can ungroup it
   
 both %>%
 mutate(course_department = fct_reorder(course_department, desc(difference))) %>%
-ggplot(aes(x = course_department, y = difference, color = difference)) +
+  # in my graph, i want departments to be lined up in an order of descending difference in enrollment, so i reorder it within a mutate() function  
+ggplot(aes(x = course_department, y = difference, color = difference, size = 5)) +
+  # i assign the variables the relationship of which i want to study and set the color to be equal to difference in enrollment, which means that darker colors will mean a bigger decline 
   geom_point() +
+  # since my data just includes points, a point graph is the best way to present my data
   coord_flip() +
-  labs(title = "Difference in Total Undergraduate \nEnrollment in Humanities Departments",
-       subtitle = "Data 2018 and 2019 shows a decline in the majority \nof departments in Humanities",
+  labs(title = "Change in Total Undergraduate \nEnrollment in Humanities Departments",
+       subtitle = "Data from Spring 2018 and 2019 shows a decline in the majority \nof departments in Humanities",
        caption = "Data from the Harvard Registrar, darker points indicate larger decline") +
+  theme_economist() +
+  theme(plot.title = element_text(color = "purple"), 
+        plot.subtitle = element_text(color = "purple"), 
+        plot.caption = element_text(color = "purple"), 
+        axis.text.y = element_text(color = "blue"), 
+        axis.text.x = element_text(color = "blue"),
+        axis.title.x = element_text(color = "purple", face = "bold"),
+        axis.title.y = element_text(color = "purple", face = "bold")) +
+  guides(color = FALSE, size = FALSE) +
   ylab("Difference in Total Enrollment") +
-  xlab("Department Name") +
-  theme_fivethirtyeight() +
-  theme(plot.title = element_text(color = "purple")) +
-  theme(plot.subtitle = element_text(color = "purple")) +
-  theme(plot.caption = element_text(color = "purple")) +
-  theme(axis.text.y = element_text(color = "blue")) +
-  theme(axis.text.x = element_text(color = "blue")) +
-  guides(color = FALSE) 
+  xlab("Department Name")
   
 
-# fs::file_delete(c("reg_2018.xlsx", "reg_2019.xlsx"))
+fs::file_delete(c("reg_2018.xlsx", "reg_2019.xlsx"))
 ```
 
