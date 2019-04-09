@@ -163,7 +163,7 @@ ggplot(aes(x = difference, y = course_department, color = difference, size = 5))
   # not shown
   
   ylab("Department Name") +
-  xlab("Difference in Total Enrollment")
+  xlab("Number of Enrolled Students")
   # i am assigning appropriate names to my x and y axis labels
 
 ```
